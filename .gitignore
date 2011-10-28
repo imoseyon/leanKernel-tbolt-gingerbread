@@ -6,6 +6,7 @@
 *.a
 *.s
 *.ko
+*.zip
 
 modules.builtin
 
@@ -22,6 +23,9 @@ modules.builtin
 /System.map
 /Module.markers
 /Module.symvers
+boot.img
+zImage
+newramdisk.cpio.gz
 
 #
 # Generated include files

@@ -10,14 +10,14 @@ else
   suffix=""
 fi
 
-sed -i s/CONFIG_LOCALVERSION=\"-imoseyon-.*\"/CONFIG_LOCALVERSION=\"-imoseyon-${2}GBS\"/ .config
+sed -i s/CONFIG_LOCALVERSION=\"-imoseyon-.*\"/CONFIG_LOCALVERSION=\"-imoseyon-${2}AOSP\"/ .config
 
 if [ $1 -eq 2 ]; then
   sed -i "s/^.*UNLOCK_184.*$/CONFIG_UNLOCK_184MHZ=n/" .config
-  zipfile="imoseyon_leanKernel_v${2}GBS${suffix}.zip"
+  zipfile="imoseyon_leanKernel_v${2}AOSP${suffix}.zip"
 else
   sed -i "s/^.*UNLOCK_184.*$/CONFIG_UNLOCK_184MHZ=y/" .config
-  zipfile="imoseyon_leanKernel_184Mhz_v${2}GBS${suffix}.zip"
+  zipfile="imoseyon_leanKernel_184Mhz_v${2}AOSP${suffix}.zip"
 fi
 
 make -j$CPU_JOB_NUM ARCH=arm CROSS_COMPILE=$TOOLCHAIN/$TOOLCHAIN_PREFIX
@@ -30,7 +30,7 @@ cd ..
 find . -name "*.ko" | xargs $TOOLCHAIN/${TOOLCHAIN_PREFIX}strip --strip-unneeded
 
 rm zip/system/lib/modules/*.ko
-cp drivers/net/wireless/bcm4329_204/bcm4329.ko zip/system/lib/modules
+cp drivers/net/wireless/bcm4329/bcm4329.ko zip/system/lib/modules
 cp drivers/net/tun.ko zip/system/lib/modules
 cp drivers/staging/zram/zram.ko zip/system/lib/modules
 cp lib/lzo/lzo_decompress.ko zip/system/lib/modules
