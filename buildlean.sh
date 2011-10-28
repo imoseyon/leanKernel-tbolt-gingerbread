@@ -29,25 +29,26 @@ cd ..
 
 find . -name "*.ko" | xargs $TOOLCHAIN/${TOOLCHAIN_PREFIX}strip --strip-unneeded
 
-rm zip/system/lib/modules/*.ko
-cp drivers/net/wireless/bcm4329/bcm4329.ko zip/system/lib/modules
-cp drivers/net/tun.ko zip/system/lib/modules
-cp drivers/staging/zram/zram.ko zip/system/lib/modules
-cp lib/lzo/lzo_decompress.ko zip/system/lib/modules
-cp lib/lzo/lzo_compress.ko zip/system/lib/modules
-cp nsio*/*.ko zip/system/lib/modules
-cp fs/cifs/cifs.ko zip/system/lib/modules
-cp arch/arm/boot/zImage mkboot/
-cp .config.aosp arch/arm/configs/lean_aosp_defconfig
+rm zip.aosp/system/lib/modules/*.ko
+cp drivers/net/wireless/bcm4329/bcm4329.ko zip.aosp/system/lib/modules
+cp drivers/net/tun.ko zip.aosp/system/lib/modules
+cp drivers/staging/zram/zram.ko zip.aosp/system/lib/modules
+cp lib/lzo/lzo_decompress.ko zip.aosp/system/lib/modules
+cp lib/lzo/lzo_compress.ko zip.aosp/system/lib/modules
+cp nsio*/*.ko zip.aosp/system/lib/modules
+cp fs/cifs/cifs.ko zip.aosp/system/lib/modules
+cp arch/arm/boot/zImage mkboot.aosp/
+#cp .config.aosp arch/arm/configs/lean_aosp_defconfig
+cp .config arch/arm/configs/lean_aosp_defconfig
 
-cd mkboot
+cd mkboot.aosp
 echo "making boot image"
 ./img.sh
 
 if [ ! $4 ]; then
 	echo "making zip file"
-	cp boot.img ../zip
-	cd ../zip
+	cp boot.img ../zip.aosp
+	cd ../zip.aosp
 	rm *.zip
 	zip -r $zipfile *
 	rm /tmp/*.zip
