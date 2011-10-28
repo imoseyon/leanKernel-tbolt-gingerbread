@@ -77,7 +77,7 @@ static struct resource mecha_wifi_resources[] = {
 		.name		= "bcm4329_wlan_irq",
 		.start		= MSM_GPIO_TO_INT(MECHA_GPIO_WIFI_IRQ),
 		.end		= MSM_GPIO_TO_INT(MECHA_GPIO_WIFI_IRQ),
-		.flags          = IORESOURCE_IRQ | IORESOURCE_IRQ_LOWEDGE,
+		.flags      = IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHLEVEL | IORESOURCE_IRQ_SHAREABLE,
 	},
 };
 
@@ -137,6 +137,7 @@ int __init mecha_wifi_init(void)
 	mecha_wifi_update_nvs("sd_oobonly=1\n");
 	mecha_wifi_update_nvs("btc_params80=0\n");
 	mecha_wifi_update_nvs("btc_params6=30\n");
+	mecha_wifi_update_nvs("btc_params70=0x32\n");
 	mecha_init_wifi_mem();
 	ret = platform_device_register(&mecha_wifi_device);
 	return ret;
