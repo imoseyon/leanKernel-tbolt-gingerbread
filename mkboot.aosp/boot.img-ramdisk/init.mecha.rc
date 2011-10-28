@@ -1,0 +1,160 @@
+on early-fs
+
+    mkdir /system
+    mkdir /data 0771 system system
+    mkdir /cache 0770 system cache
+    mkdir /devlog 0700 root root
+    mount ext4 /dev/block/mmcblk0p25 /system noatime ro noauto_da_alloc,barrier=0,data=writeback
+    mount ext4 /dev/block/mmcblk0p26 /data noatime data=ordered,barrier=1,noauto_da_alloc
+    mount ext4 /dev/block/mmcblk0p27 /cache noatime noauto_da_alloc,barrier=0,data=writeback 
+    mount ext4 /dev/block/mmcblk0p29 /devlog noatime data=ordered,noauto_da_alloc,barrier=0
+
+#on early-init
+    device mtd@misc 0460 radio diag
+
+on init
+    # double check the perms and set owner
+    chown root root /devlog
+    chmod 0700 /devlog
+
+on boot
+    #from QCT Fusion
+    mkdir /data/radio 0770 radio radio
+    chown radio system /sys/module/smd_rpcrouter/parameters/debug_mask
+    chown radio system /sys/module/rpcrouter_sdio_xprt/parameters/debug_mask
+    #from QCT Fusion
+
+    # Improvements for evdo-b and lte
+    write /proc/sys/net/core/rmem_max  262144
+    write /proc/sys/net/core/wmem_max  262144
+
+    # Tweak background writeout
+    write /proc/sys/vm/dirty_expire_centisecs 200
+    write /proc/sys/vm/dirty_background_bytes 1024000
+    write /proc/sys/vm/dirty_bytes 20480000
+    write /proc/sys/vm/highmem_is_dirtyable 1
+
+    #wifi
+    mkdir /data/misc 1771 system misc
+    mkdir /data/misc/wifi 0770 wifi wifi
+    mkdir /data/misc/wifi/sockets 0770 wifi wifi
+    mkdir /data/misc/dhcp 0770 dhcp dhcp
+    chown dhcp dhcp /data/misc/dhcp
+
+    # Permissions for System Server and daemons.
+    chown radio system /sys/module/gpio_event/parameters/phone_call_status
+    chmod 0660 /sys/android_camera2/htcwc
+    chown media system /sys/android_camera2/htcwc
+    chown radio system /sys/camera_led_status/led_ril_status
+    chown system system /sys/camera_led_status/led_wimax_status
+    chown system system /sys/camera_led_status/led_hotspot_status
+
+    # Permissions for Liblights.
+    chown system system /sys/class/leds/green/brightness
+    chown system system /sys/class/leds/green/blink
+    chown system system /sys/class/leds/amber/brightness
+    chown system system /sys/class/leds/amber/blink
+    chown system system /sys/class/leds/button-backlight/brightness
+    chown system system /sys/class/leds/lcd-backlight/brightness
+    chown system system /sys/class/leds/flashlight/brightness
+    chmod 0666 /sys/class/leds/flashlight/brightness
+
+    # bluetooth power up/down interface
+    chown bluetooth bluetooth /sys/class/rfkill/rfkill0/type
+    chown bluetooth bluetooth /sys/class/rfkill/rfkill0/state
+    chmod 0660                /sys/class/rfkill/rfkill0/state
+
+    # bluetooth MAC address programming
+    chown bluetooth bluetooth /sys/module/board_mecha/parameters/bdaddr
+    setprop ro.bt.bdaddr_path /sys/module/board_mecha/parameters/bdaddr
+
+	# for wireless modem
+	chown system system /sys/module/serial/parameters/modem_enabled
+	chown system system /dev/ttyHSUSB0
+	chown system system /dev/ttySA0
+	chown system system /dev/smd9
+
+    # 9k modem
+    chown system system /sys/module/msm72k_udc/parameters/mdm_port_enabled
+    chown system system /sys/module/smsc251x/parameters/hub_enabled
+
+service ril-ims-daemon /system/bin/rild_ims
+    socket rild-ims stream 660 root radio
+    user root
+    group radio cache inet misc audio
+
+service wpa_supplicant /system/bin/logwrapper /system/bin/wpa_supplicant \
+    -Dwext -ieth0 -c/data/misc/wifi/wpa_supplicant.conf
+#   we will start as root and wpa_supplicant will switch to user wifi
+#   after setting up the capabilities required for WEXT
+#   user wifi
+#   group wifi inet keystore
+    socket wpa_eth0 dgram 660 wifi wifi
+    disabled
+    oneshot
+
+service dhcpcd_eth0 /system/bin/dhcpcd -ABKL
+    disabled
+    oneshot
+
+service iprenew_eth0 /system/bin/dhcpcd -n
+    disabled
+    oneshot
+
+# compass/accelerometer daemon
+service akmd /system/bin/akmd
+    user compass
+    group compass misc input
+
+# bugreport is triggered by the KEY_VOLUMEUP and BTN_VOLUMEDOWN keycodes
+service bugreport /system/bin/dumpstate -d -v -o /sdcard/bugreports/bugreport
+    disabled
+    oneshot
+    keycodes 115 114
+
+service hciattach /system/bin/brcm_patchram_plus --enable_hci --enable_lpm \
+    --baudrate 3000000 --patchram /etc/firmware/bcm4329.hcd /dev/ttyHS0
+    user bluetooth
+    group bluetooth net_bt_admin
+    disabled
+
+
+service rmt_storage /system/bin/rmt_storage /dev/block/mmcblk0p13 /dev/block/mmcblk0p14
+    user root
+
+
+#+from QCT Fusion
+service qmuxd /system/bin/qmuxd
+
+service netmgrd /system/bin/netmgrd
+
+on property:ro.use_data_netmgrd=false
+    # netmgr not supported on specific target
+    stop netmgrd
+
+on property:ro.data.large_tcp_window_size=true
+    # Adjust socket buffer to enlarge TCP receive window for high bandwidth (e.g. DO-RevB)
+    write /proc/sys/net/ipv4/tcp_adv_win_scale  1
+
+#-from QCT Fusion
+
+service modem /system/xbin/wireless_modem
+	user system
+	group system
+	disabled
+
+on property:service.modem.enable=1
+	start modem
+
+on property:service.modem.enable=0
+	stop modem
+
+
+
+service dmagent /system/bin/dmagent -N -P19 -SA -VSY
+    socket dmagent stream 660 root radio
+    user root
+    group radio cache inet misc
+
+service ipd /system/bin/ipd
+    socket ipd stream 666 root inet

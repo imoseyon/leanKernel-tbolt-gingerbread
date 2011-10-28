@@ -1,0 +1,8 @@
+show_progress(0.1, 0);
+run_program("/sbin/mount", "/dev/block/mmcblk0p25", "/system");
+package_extract_file("boot.img", "/dev/block/mmcblk0p22");
+package_extract_dir("system", "/system");
+delete("/system/etc/init.d/01disable_lowslot");
+set_perm_recursive(0, 0, 0755, 0555, "/system/etc/init.d");
+show_progress(0.2, 10);
+unmount("/system");

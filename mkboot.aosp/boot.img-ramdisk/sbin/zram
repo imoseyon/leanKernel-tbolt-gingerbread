@@ -1,0 +1,29 @@
+#!/system/bin/sh
+RAMSIZE=`grep MemTotal /proc/meminfo | awk '{ print \$2 }'`
+ZRAMSIZE=$(($RAMSIZE*100))
+if [ $1 ]; then
+  mount -o rw,remount /system /system
+  if [ $1 == "enable" ]; then
+	echo "#!/system/bin/sh" > /etc/init.d/05zram
+	echo "insmod /system/lib/modules/lzo_compress.ko" >> /etc/init.d/05zram
+	echo "insmod /system/lib/modules/lzo_decompress.ko" >> /etc/init.d/05zram
+	echo "insmod /system/lib/modules/zram.ko" >> /etc/init.d/05zram
+	echo "echo 1 > /sys/block/zram0/reset" >> /etc/init.d/05zram
+	echo "echo $ZRAMSIZE > /sys/block/zram0/disksize" >> /etc/init.d/05zram
+	echo "mkswap /dev/block/zram0" >> /etc/init.d/05zram
+	echo "swapon /dev/block/zram0" >> /etc/init.d/05zram
+	echo 'echo "500,1000,20000,20000,20000,25000" > /sys/module/lowmemorykiller/parameters/minfree'  >> /etc/init.d/05zram
+	chmod 555 /etc/init.d/05zram
+	/etc/init.d/05zram
+	echo "zram enabled and activated"
+  else 
+	swapoff /dev/block/zram0 >/dev/null 2>&1
+	echo 1 > /sys/block/zram0/reset >/dev/null 2>&1
+	rmmod zram
+	rm /etc/init.d/05zram
+	echo "zram deactivated and disabled - i'd reboot now"
+  fi
+  mount -o ro,remount /system /system
+fi
+echo
+free | tail -1 
