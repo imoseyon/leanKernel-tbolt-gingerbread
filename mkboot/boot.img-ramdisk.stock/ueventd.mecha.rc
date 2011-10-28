@@ -1,0 +1,37 @@
+
+/dev/pvrsrvkm             0666   system     system
+/dev/video0               0660   system     camera
+/dev/video1               0660   system     camera
+/dev/video2               0660   system     camera
+/dev/s3c-jpg              0660   system     camera
+/dev/s3c-mem              0660   system     system
+/dev/s3c-mfc              0660   system     graphics
+
+/dev/modem_ctl            0660   radio      radio
+/dev/modem_fmt            0660   radio      radio
+/dev/modem_rfs            0660   radio      radio
+/dev/s3c2410_serial3      0660   radio      radio
+/dev/block/mtdblock5      0660   radio      radio
+/dev/mtd/mtd5ro           0660   radio      radio
+
+# for Sensor HAL
+/dev/akm8973              0660   system     system
+/dev/accelerometer        0660   system     system
+
+# for GPS
+/dev/s3c2410_serial1      0600   gps        gps
+
+#for audio
+/dev/msm_acdb	          0660   system     audio
+/dev/codec_aic3254        0660   system     audio
+/dev/msm_audio_dev_ctrl   0660   system     audio
+/dev/control0             0660   system     audio
+/dev/msm_mp3              0660   system     audio
+/dev/msm_mp3_lp           0660   system     audio
+/dev/msm_pcm_in           0660   system     audio
+/dev/msm_pcm_lp_dec       0660   system     audio
+/dev/msm_pcm_out          0660   system     audio
+/dev/htc-acdb             0660   system     audio
+/dev/htc-acoustic         0660   system     audio
+/dev/controlC0            0660   system     audio
+/dev/adsp                 0660   system     audio

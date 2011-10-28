@@ -1,0 +1,10 @@
+rm -r /data/data/com.android.browser/cache
+mkdir /app-cache/com.android.browser
+chmod 755 /app-cache/com.android.browser
+chownto /app-cache/com.android.browser /data/data/com.android.browser
+mkdir /app-cache/com.android.browser/cache
+chmod 755 /app-cache/com.android.browser/cache
+chownto /app-cache/com.android.browser/cache /data/data/com.android.browser
+ln -s /app-cache/com.android.browser/cache /data/data/com.android.browser/cache
+rm -r /data/app-cache
+
