@@ -7,10 +7,10 @@ TOOLCHAIN_PREFIX=arm-none-linux-gnueabi-
 if [ $3 ]; then
   suffix="test$3"
 else
-  suffix="alpha"
+  suffix=""
 fi
 
-sed -i s/CONFIG_LOCALVERSION=\"-imoseyon-.*\"/CONFIG_LOCALVERSION=\"-imoseyon-${2}GBSalpha\"/ .config
+sed -i s/CONFIG_LOCALVERSION=\"-imoseyon-.*\"/CONFIG_LOCALVERSION=\"-imoseyon-${2}GBS\"/ .config
 
 if [ $1 -eq 2 ]; then
   sed -i "s/^.*UNLOCK_184.*$/CONFIG_UNLOCK_184MHZ=n/" .config
