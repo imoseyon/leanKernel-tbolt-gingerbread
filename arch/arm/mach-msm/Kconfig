@@ -1967,3 +1967,8 @@ config TIWLAN_SDIO
         help
            Say Y here if you want to be able to use TI's WLAN device using the
            SDIO interface. If unsure, say N.
+
+config UNLOCK_184MHZ
+        bool "Unlock 184Mhz"
+        depends on ARCH_MSM7X30
+        default n
