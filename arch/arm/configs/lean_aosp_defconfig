@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.35.14
-# Fri Oct 28 10:45:24 2011
+# Fri Oct 28 14:27:07 2011
 #
 CONFIG_ARM=y
 CONFIG_SYS_SUPPORTS_APM_EMULATION=y
@@ -1141,7 +1141,6 @@ CONFIG_TUN=m
 CONFIG_WLAN=y
 # CONFIG_HOSTAP is not set
 CONFIG_BCM4329=m
-# CONFIG_BCM4329_SOFTAP is not set
 CONFIG_BCM4329_FW_PATH="/vendor/firmware/fw_bcm4329.bin"
 CONFIG_BCM4329_NVRAM_PATH="/proc/calibration"
 # CONFIG_BCM4329_248 is not set
@@ -1553,7 +1552,7 @@ CONFIG_MSM_CAMERA=y
 CONFIG_MSM_CAMERA_7X30=y
 # CONFIG_MSM_CAMERA_8X60 is not set
 # CONFIG_MSM_CAMERA_DEBUG is not set
-CONFIG_FLASH_BACKLIGHT_OFF=y
+# CONFIG_FLASH_BACKLIGHT_OFF is not set
 
 #
 # Camera Sensor Selection

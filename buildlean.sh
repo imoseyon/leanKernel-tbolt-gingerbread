@@ -38,8 +38,8 @@ cp lib/lzo/lzo_compress.ko zip.aosp/system/lib/modules
 cp nsio*/*.ko zip.aosp/system/lib/modules
 cp fs/cifs/cifs.ko zip.aosp/system/lib/modules
 cp arch/arm/boot/zImage mkboot.aosp/
-#cp .config.aosp arch/arm/configs/lean_aosp_defconfig
 cp .config arch/arm/configs/lean_aosp_defconfig
+cp .config .config.aosp
 
 cd mkboot.aosp
 echo "making boot image"
