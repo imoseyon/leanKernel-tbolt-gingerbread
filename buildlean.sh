@@ -38,7 +38,7 @@ cp lib/lzo/lzo_compress.ko zip/system/lib/modules
 cp nsio*/*.ko zip/system/lib/modules
 cp fs/cifs/cifs.ko zip/system/lib/modules
 cp arch/arm/boot/zImage mkboot/
-#cp .config arch/arm/configs/lean_GBS_defconfig
+cp .config arch/arm/configs/lean_gbs_defconfig
 
 cd mkboot
 echo "making boot image"
