@@ -39,6 +39,7 @@ cp nsio*/*.ko zip/system/lib/modules
 cp fs/cifs/cifs.ko zip/system/lib/modules
 cp arch/arm/boot/zImage mkboot/
 cp .config arch/arm/configs/lean_gbs_defconfig
+cp .config .config.aosp
 
 cd mkboot
 echo "making boot image"
