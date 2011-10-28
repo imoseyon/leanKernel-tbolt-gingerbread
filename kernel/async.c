@@ -125,6 +125,7 @@ static void run_one_entry(void)
 	unsigned long flags;
 	struct async_entry *entry;
 	ktime_t calltime, delta, rettime;
+ 	calltime = ktime_get();
 
 	/* 1) pick one task from the pending queue */
 
@@ -281,6 +282,7 @@ void async_synchronize_cookie_domain(async_cookie_t cookie,
 				     struct list_head *running)
 {
 	ktime_t starttime, delta, endtime;
+ 	starttime = ktime_get();
 
 	if (initcall_debug && system_state == SYSTEM_BOOTING) {
 		printk("async_waiting @ %i\n", task_pid_nr(current));
