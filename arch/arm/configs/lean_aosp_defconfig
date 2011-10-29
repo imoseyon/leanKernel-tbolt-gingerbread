@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.35.14
-# Fri Oct 28 15:28:56 2011
+# Fri Oct 28 20:40:09 2011
 #
 CONFIG_ARM=y
 CONFIG_SYS_SUPPORTS_APM_EMULATION=y
@@ -444,6 +444,7 @@ CONFIG_PROC_COMM_TIMEOUT_RESET=y
 # TI WLAN driver
 #
 # CONFIG_TIWLAN_SDIO is not set
+CONFIG_UNLOCK_184MHZ=n
 
 #
 # Processor Type
