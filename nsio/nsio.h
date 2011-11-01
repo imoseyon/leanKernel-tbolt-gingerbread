@@ -1,9 +1,13 @@
-#define MY_API_VERSION          "1.0"
+#define MY_API_VERSION          "2.0"
 #define PROCFS_NAME             "nsio"
-#define IOBUF_SIZE              512
+
+#define IOBUF_SIZE          512
+
 #define MAX_LOG_RECORDS         128
 #define MAX_FILTER_RECORDS      64
+
 #define MAX_DATA_LEN          	1024
+
 
 typedef struct {
     struct timespec ctime;
@@ -46,6 +50,7 @@ enum {
     API_GET_LOG,
     API_GET_PACKET,
     API_CLEAR_FILTERS,
+    API_MASTER_TOGGLE,
     API_LAST_COMMAND
 };
 

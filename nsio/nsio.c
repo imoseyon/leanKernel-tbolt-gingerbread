@@ -1,8 +1,9 @@
 /******
- NetSpector kernel driver, version 1.0
+ NetSpector kernel driver, version 2.0
  http://www.hexview.com/android/netspector
  android@hexview.com
 ******/
+
 
 #include <linux/module.h>
 #include <linux/moduleparam.h>
@@ -17,6 +18,9 @@
 
 MODULE_AUTHOR("HexView");
 MODULE_LICENSE("GPL");
+MODULE_VERSION(MY_API_VERSION);
+MODULE_DESCRIPTION("NetSpector filter module. http://www.hexview.com/android/netspector");
+MODULE_PARM_DESC (fake_vermagic_buffer,"********************************************************************************************************************************************");
 
 static unsigned int max_log 	= MAX_LOG_RECORDS;
 static unsigned int max_filters	= MAX_FILTER_RECORDS;
@@ -46,6 +50,7 @@ static u32 api_cmd = API_GET_VERSION;
 
 static u32 filter_count=0;
 
+static u32 master_bypass = 0;
 
 char *strip_leading_spaces(char *str)
 {
@@ -221,28 +226,29 @@ filter_rec_s *check_filters(struct tcphdr *tcph, char *data, u32 data_len)
                 return frec;
                 }
             
-            if (!strings_extracted) {
-                while (data) {
+            if (strings_extracted == 0) {
 
-                    while ( (*data == '\r' || *data == '\n') &&  data_len > 5 ) {
-                        data++;
-                        data_len--;
-                        }
-                    // extracted strings are terminated by '\r' or '\n';
-                    if      (strnicmp(data,"Host:",5)==0) ss_host = strip_leading_spaces(data+5);
-                    else if (strnicmp(data,"GET ",4)==0)  ss_req  = strip_leading_spaces(data+4);
-                    else if (strnicmp(data,"POST ",5)==0) ss_req  = strip_leading_spaces(data+5);
-                    else if (strnicmp(data,"HEAD ",5)==0) ss_req  = strip_leading_spaces(data+5);
+                while (data != NULL &&  data_len >= 5) {
 
-                    while (*data != '\r' && *data != '\n' && data_len > 5 ) {
+                    if (strings_extracted == 0) {
+                        if (strnicmp(data,"GET " ,4) == 0 || 
+                            strnicmp(data,"PUT " ,4) == 0 ||
+                            strnicmp(data,"POST ",5) == 0 ||
+                            strnicmp(data,"HEAD ",5) == 0 )  ss_req  = data;
+                    }else{
+                        if (strnicmp(data,"Host:",5)==0) ss_host = strip_leading_spaces(data+5);
+                    }
+
+                    while (*data != '\r' && *data != '\n' && data_len > 0 ) {
                         data++;
                         data_len--;
                     }
-                   if (data_len <=5 ) data = NULL;
-
+                    while ( (*data == '\r' || *data == '\n') && data_len > 0 ) {
+                        data++; 
+                        data_len--;
+                        }
+                   strings_extracted++;
                 }
-
-                strings_extracted = 1;
             }
 
             if (frec->match_host) {
@@ -278,6 +284,8 @@ int process_tcp_packet(struct tcphdr *tcph, struct iphdr *iph, struct sk_buff *s
     filter_rec_s *frec = NULL;
     log_rec_s *lrec = &conn_list[clog_tail];
     char *data;
+
+    if (master_bypass != 0 ) return NF_ACCEPT;
 
     data = (char *) tcph + (tcph->doff << 2);
     tcplen = (u32) ntohs(iph->tot_len) - (iph->ihl << 2) - (tcph->doff << 2);
@@ -331,15 +339,19 @@ int process_tcp_packet(struct tcphdr *tcph, struct iphdr *iph, struct sk_buff *s
 
     if ( (frec->action & ACT_DROP) != 0 ) {
         if (clear_data !=0) memset(data,0,tcplen);
+
         tcph->fin =1;
         tcph->rst =1;
         tcph->psh =0;
     }
 
     if ( (frec->action & 0xFF) != ACT_IGNORE ) { 
+
         tcplen=	ntohs(iph->tot_len) - iph->ihl *4;
+
         tcph->check = 0;
         tcph->check = tcp_v4_check(tcplen, iph->saddr,iph->daddr, csum_partial(tcph, tcplen, 0));
+
         iph->check = 0;
         ip_send_check(iph);
     }
@@ -359,8 +371,10 @@ static unsigned int hook_func(unsigned int hooknum,
     if (!iph) return NF_ACCEPT;
 
     if (iph->protocol != IPPROTO_TCP) return NF_ACCEPT;
+
     tcph = (struct tcphdr *)(skb_network_header(sb) + ip_hdrlen(sb));
-    return process_tcp_packet(tcph,iph,sb);
+
+    return process_tcp_packet(tcph,iph,sb); 
 
 }
 
@@ -378,6 +392,7 @@ static void *nfhook_seq_start(struct seq_file *s, loff_t *pos)
 
     if ( *pos == 0 )
     {
+
         switch (api_cmd) {
         case API_GET_PACKET:
             break;
@@ -448,7 +463,7 @@ static int nfhook_seq_show(struct seq_file *s, void *v)
 
     switch (api_cmd) {
     case API_GET_VERSION:
-        return seq_printf(s, "API%s %u %u %u %u %u\n", MY_API_VERSION, max_log, max_filters, max_data, conn_count, filter_count);
+        return seq_printf(s, "API%s %u %u %u %u %u %u\n", MY_API_VERSION, max_log, max_filters, max_data, conn_count, filter_count, master_bypass);
     case API_GET_FILTERS:
             frec = &filter_list[recno];
             ret= seq_printf(s, "%u\t%u\t%u\t%u\t%s\t%s\t%s\t%s\n", frec->id, frec->hitcount,
@@ -518,7 +533,7 @@ static ssize_t nfhook_write(struct file *file, const char *wbuf, size_t len, lof
     char buffer[IOBUF_SIZE+1];
 
     u8 acmd;
-    unsigned int pktno;
+    unsigned int pktno, mswitch;
     u32 fid,fhits,fact,fport;
     char *sptrs[5];
 
@@ -540,6 +555,9 @@ static ssize_t nfhook_write(struct file *file, const char *wbuf, size_t len, lof
                 api_cmd = acmd;
                 log_pkt_req = pktno;
             }
+            break;
+        case API_MASTER_TOGGLE:
+            if ( (sscanf(&buffer[3],"%u",&mswitch) == 1) ) master_bypass = (mswitch & 1);
             break;
         case API_SET_FILTER:
             if (len <12) return len;
@@ -612,7 +630,9 @@ int init_module()
     nfho.pf       = PF_INET;
     nfho.hooknum  = NF_INET_POST_ROUTING;
     nfho.priority = NF_IP_PRI_FIRST;
+
     nf_register_hook(&nfho);
+
     proc_create(PROCFS_NAME, 0666, NULL, &proc_fops);
 
     return 0;
