@@ -37,3 +37,8 @@ include/generated
 arch/arm/boot/compressed/lib1funcs.S
 arch/arm/boot/compressed/piggy.gzip
 arch/arm/boot/compressed/vmlinux
+include/config/auto.conf
+include/config/kernel.release
+include/generated/autoconf.h
+include/generated/compile.h
+include/generated/utsrelease.h
