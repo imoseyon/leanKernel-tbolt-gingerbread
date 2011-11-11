@@ -232,6 +232,7 @@ static int rmnet_cause_wakeup(struct rmnet_private *p) {
 	return ret;
 }
 
+#if 0
 static ssize_t wakeups_xmit_show(struct device *d,
 				 struct device_attribute *attr,
 				 char *buf)
@@ -274,6 +275,7 @@ static ssize_t timeout_show(struct device *d, struct device_attribute *attr,
 }
 
 DEVICE_ATTR(timeout, 0664, timeout_show, timeout_store);
+#endif
 #endif
 
 static __be16 rmnet_ip_type_trans(struct sk_buff *skb, struct net_device *dev)
@@ -842,12 +844,14 @@ static int __init rmnet_init(void)
 		}
 
 #ifdef CONFIG_MSM_RMNET_DEBUG
+/*
 		if (device_create_file(d, &dev_attr_timeout))
 			continue;
 		if (device_create_file(d, &dev_attr_wakeups_xmit))
 			continue;
 		if (device_create_file(d, &dev_attr_wakeups_rcv))
 			continue;
+*/
 #ifdef CONFIG_HAS_EARLYSUSPEND
 		if (device_create_file(d, &dev_attr_timeout_suspend))
 			continue;
