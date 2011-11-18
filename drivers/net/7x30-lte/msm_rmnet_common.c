@@ -95,7 +95,7 @@ static ssize_t timeout_suspend_store(struct device *d,
 				     struct device_attribute *attr,
 				     const char *buf, size_t n)
 {
-	timeout_suspend_us = strict_strtoul(buf, NULL, 10);
+	timeout_suspend_us = strict_strtoul(buf, 10, NULL);
 	return n;
 }
 
@@ -187,11 +187,10 @@ static ssize_t timeout_store(struct device *d, struct device_attribute *attr,
 	p->timeout_us = timeout_us = strict_strtoul(buf, NULL, 10);
 #else
 /* If using early suspend/resume hooks do not write the value on store. */
-	timeout_us = strict_strtoul(buf, NULL, 10);
+	timeout_us = strict_strtoul(buf, 10, NULL);
 #endif
 	return n;
 }
-
 static ssize_t timeout_show(struct device *d, struct device_attribute *attr,
 			    char *buf)
 {
