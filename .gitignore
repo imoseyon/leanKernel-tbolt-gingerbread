@@ -33,6 +33,7 @@ newramdisk.cpio.gz
 include/config
 include/linux/version.h
 include/generated
+arch/*/include/generated
 
 arch/arm/boot/compressed/lib1funcs.S
 arch/arm/boot/compressed/piggy.gzip
