@@ -947,7 +947,7 @@ int mddi_reg_debugfs_init(struct mddi_info *mddi)
         if (IS_ERR(mddi_reg_dent))
                 return PTR_ERR(mddi_reg_dent);
 
-        debugfs_create_file("reg", 0600, mddi_reg_dent, mddi,
+        debugfs_create_file("reg", 0666, mddi_reg_dent, mddi,
                 &mddi_reg_debugfs_fops[0]);
 
         return 0;

@@ -29,9 +29,7 @@
 #ifndef MDP4_H
 #define MDP4_H
 
-/*
-#define DEBUG_OVERLAY
-*/
+
 
 #define MDP4_NONBLOCKING	/* enable non blocking ioctl */
 

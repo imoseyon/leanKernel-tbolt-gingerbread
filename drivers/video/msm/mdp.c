@@ -1103,10 +1103,6 @@ static int mdp_hw_version(void)
 }
 #endif
 
-#ifdef DEBUG_OVERLAY
-int mdp4_overlay_debugfs_init(void);
-#endif
-
 int mdp_probe(struct platform_device *pdev)
 {
 	struct resource *resource;
@@ -1283,9 +1279,6 @@ int mdp_probe(struct platform_device *pdev)
 #endif
 	PR_DISP_INFO("%s: initialized\n", __func__);
 
-#ifdef DEBUG_OVERLAY
-	mdp4_overlay_debugfs_init();
-#endif
 	return 0;
 
 error_device_register:

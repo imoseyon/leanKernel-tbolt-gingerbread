@@ -76,8 +76,6 @@ do { \
 } while (0)
 #define BITS_PER_PIXEL(info) (info->fb->var.bits_per_pixel)
 #define BYTES_PER_PIXEL(info) (info->fb->var.bits_per_pixel >> 3)
-int msmfb_overlay_enable=1;
-int first_overlay_set = 0;
 static int msmfb_debug_mask;
 module_param_named(msmfb_debug_mask, msmfb_debug_mask, int,
 		   S_IRUGO | S_IWUSR | S_IWGRP);
@@ -771,11 +769,6 @@ static int msmfb_overlay_set(struct fb_info *info, void __user *p)
 	if (copy_from_user(&req, p, sizeof(req)))
 		return -EFAULT;
 
-	if (msmfb_overlay_enable == 0 && !first_overlay_set)
-		return 0;
-	if (first_overlay_set > 0)
-		first_overlay_set--;
-
 	PR_DISP_INFO("%s(%d) dst rect info w=%d h=%d x=%d y=%d rotator=%d\n", __func__, __LINE__, req.dst_rect.w, req.dst_rect.h, req.dst_rect.x, req.dst_rect.y, req.user_data[0]);
 	ret = mdp->overlay_set(mdp, info, &req);
 	if (ret) {
@@ -812,6 +805,7 @@ static int msmfb_overlay_play(struct fb_info *info, unsigned long *argp)
 	int	ret;
 	struct msmfb_overlay_data req;
 	struct file *p_src_file = 0;
+	struct msmfb_info *msmfb = info->par;
 
 	ret = copy_from_user(&req, argp, sizeof(req));
 	if (ret) {
@@ -822,24 +816,18 @@ static int msmfb_overlay_play(struct fb_info *info, unsigned long *argp)
 
 	ret = mdp->overlay_play(mdp, info, &req, &p_src_file);
 
+	if (ret == 0 && (mdp->overrides & MSM_MDP_FORCE_UPDATE)
+			&& msmfb->sleeping == AWAKE) {
+		msmfb_pan_update(info,
+			0, 0, info->var.xres, info->var.yres,
+			info->var.yoffset, 1);
+	}
+
 	if (p_src_file)
 		put_pmem_file(p_src_file);
 
 	return ret;
 }
-
-static int msmfb_overlay_play_enable(struct fb_info *info, unsigned long enable)
-{
-	if(enable)
-		msmfb_overlay_enable = enable;
-	else
-	{
-		first_overlay_set = 1;
-		msmfb_overlay_enable = 0;
-	}
-	return 0;
-}
-
 #ifdef CONFIG_FB_MSM_WRITE_BACK
 static int msmfb_overlay_blt(struct fb_info *info, unsigned long *argp)
 {
@@ -974,6 +962,7 @@ static int msmfb_get_gamma_curvy(struct fb_info *info, void __user *p)
 }
 #endif
 
+
 DEFINE_MUTEX(mdp_ppp_lock);
 
 static int msmfb_ioctl(struct fb_info *p, unsigned int cmd, unsigned long arg)
@@ -1033,9 +1022,6 @@ static int msmfb_ioctl(struct fb_info *p, unsigned int cmd, unsigned long arg)
 			ret = -EINVAL;
 		} else
 			ret = msmfb_overlay_play(p, argp);
-		break;
-	case MSMFB_OVERLAY_PLAY_ENABLE:
-		ret = msmfb_overlay_play_enable(p, arg);
 		break;
 	case MSMFB_OVERLAY_CHANGE_ZORDER_VG_PIPES:
 		if(!atomic_read(&mdpclk_on)) {
@@ -1150,7 +1136,7 @@ static void setup_fb_info(struct msmfb_info *msmfb)
 	fb_info->var.yres = msmfb->yres;
 	fb_info->var.width = msmfb->panel->fb_data->width;
 	fb_info->var.height = msmfb->panel->fb_data->height;
-	fb_info->var.xres_virtual = ALIGN(msmfb->xres, 32);
+	fb_info->var.xres_virtual = msmfb->xres;
 	fb_info->var.yres_virtual = msmfb->yres * 2;
 	fb_info->var.bits_per_pixel = BITS_PER_PIXEL_DEF;
 	fb_info->var.accel_flags = 0;
@@ -1313,10 +1299,6 @@ static int msmfb_probe(struct platform_device *pdev)
 		register_onchg_suspend(&msmfb->onchg_earlier_suspend);
 	}
 #endif
-#endif
-
-#ifdef CONFIG_FB_MSM_OVERLAY
-	msmfb_overlay_enable = 1;
 #endif
 
 #if MSMFB_DEBUG

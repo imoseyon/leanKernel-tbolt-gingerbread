@@ -77,7 +77,6 @@
 #include <linux/semaphore.h>
 #include <linux/uaccess.h>
 #include <linux/mutex.h>
-#include <linux/syscalls.h>
 #include <mach/debug_display.h>
 
 #include "mdp_hw.h"
@@ -1629,22 +1628,20 @@ static int mdp4_pull_mode(struct mdp4_overlay_pipe *pipe)
 int mdp4_overlay_alter_req(struct mdp_overlay *req)
 {
 	if (req->src.format == 5 &&
-	    req->src.width == 1280 &&
-	    req->src.height == 720 &&
-	    req->dst_rect.w == 480
-	) {
+			req->src.width == 1280 &&
+			req->src.height == 720 &&
+			req->dst_rect.w == 480
+	   ) {
 		pr_info("%s: alter req due to down-scaling issue of 720p.",
-			__func__);
+				__func__);
 		req->src_rect.x = 60;
 		req->src_rect.y = 90;
-	        req->src_rect.w = 960;
-	        req->src_rect.h = 540;
+		req->src_rect.w = 960;
+		req->src_rect.h = 540;
 	}
 
 	return 0;
 }
-
-void mdp4_dump_ov(struct mdp_overlay *ov);
 
 int mdp4_overlay_set(struct mdp_device *mdp_dev, struct fb_info *info, struct mdp_overlay *req)
 {
@@ -1658,9 +1655,6 @@ int mdp4_overlay_set(struct mdp_device *mdp_dev, struct fb_info *info, struct md
 	if (req->src.format == MDP_FB_FORMAT)
 		req->src.format = MDP_RGB_565;//mfd->fb_imgType;
 
-#ifdef DEBUG_OVERLAY
-	mdp4_dump_ov(req);
-#endif
 	mdp4_overlay_alter_req(req);
 
 #ifdef CONFIG_PANEL_SELF_REFRESH
@@ -1788,61 +1782,6 @@ uint32_t tile_mem_size(struct mdp4_overlay_pipe *pipe, struct tile_desc *tp)
 	return ((row_num_w * row_num_h * tile_w * tile_h) + 8191) & ~8191;
 }
 
-#ifdef DEBUG_OVERLAY
-
-static char     snapshot_filename[2048];
-static bool	is_demanding_snapshot = false;
-static		DEFINE_MUTEX(snapshot_lock);
-
-/*
-TODO: file header to brife the image content
-*/
-int mdp4_overlay_snapshot(struct msmfb_overlay_data *req, uint32_t phy_addr,
-	int w, int h, int bpp, char *filename)
-{
-	int retval, size;
-	uint8_t *vir_addr;
-	struct file *dstf;
-	mm_segment_t orgfs;
-
-	/* Save FS register and set FS register to kernel space, needed
-	 * for read and write to accept buffer in kernel space.
-	 */
-	orgfs = get_fs();
-	set_fs(KERNEL_DS);
-
-	dstf = filp_open(filename, O_WRONLY | O_TRUNC | O_CREAT , 0644);
-	if (IS_ERR(dstf)) {
-		pr_err("%s: Error %ld opening %s\n", __func__,
-				-PTR_ERR(dstf), filename);
-		is_demanding_snapshot = false;
-		return -EIO;
-	}
-
-	if (!(dstf->f_op && dstf->f_op->write)) {
-		pr_err("file doesn't have a write method\n");
-		return -EFAULT;
-	}
-
-	size = w * h * bpp;
-	vir_addr = (uint8_t *)ioremap(phy_addr, size);
-	pr_info("%s: w=%d, h=%d, size=%d, vir=%08x\n", __func__,
-		w, h, size, (uint32_t)vir_addr);
-	retval = dstf->f_op->write(dstf, vir_addr, size, &dstf->f_pos);
-	iounmap(vir_addr);
-
-	retval = filp_close(dstf,NULL);
-	if (retval)
-		pr_err("%s: Error %d closing %s\n", __func__,
-			-retval, filename);
-
-	set_fs(orgfs);
-	is_demanding_snapshot = false;
-
-	return 0;
-}
-#endif
-
 int mdp4_overlay_play(struct mdp_device *mdp_dev, struct fb_info *info, struct msmfb_overlay_data *req,
 		struct file **pp_src_file)
 {
@@ -1894,15 +1833,6 @@ int mdp4_overlay_play(struct mdp_device *mdp_dev, struct fb_info *info, struct m
 	pipe->srcp0_addr = addr;
 	pipe->srcp0_ystride = pipe->src_width * pipe->bpp;
 	pipe->mdp = mdp;
-
-#ifdef DEBUG_OVERLAY
-	mutex_lock(&snapshot_lock);
-	if (is_demanding_snapshot) {
-		mdp4_overlay_snapshot(req, addr, pipe->src_width,
-			pipe->src_height, pipe->bpp, snapshot_filename);
-	}
-	mutex_unlock(&snapshot_lock);
-#endif
 
 	clk_set_rate(mdp->ebi1_clk, 153000000);
 	clk_enable(mdp->clk);
@@ -1961,154 +1891,3 @@ int mdp4_overlay_play(struct mdp_device *mdp_dev, struct fb_info *info, struct m
 
 	return 0;
 }
-
-/*---------------------------------------------------------------------------*/
-#ifdef DEBUG_OVERLAY
-static char     debug_buf[2048];
-int ov_dump_req(struct mdp_overlay *ov, char *buff)
-{
-	int len = 0;
-	char *bp = buff;
-	struct mdp_rect *r;
-	uint32_t *p = ov->user_data;
-
-	len = snprintf(buff, sizeof(debug_buf),
-		"[OV]src: width=%d, height=%d, format=%d\n",
-		ov->src.width, ov->src.height, ov->src.format);
-	r = &ov->src_rect;
-	bp += len;
-	len = snprintf(bp, sizeof(debug_buf),
-		"[OV]src_rect: x=%d, y=%d, w=%d, h=%d\n",
-		r->x, r->y, r->w, r->h);
-	r = &ov->dst_rect;
-	bp += len;
-	len = snprintf(bp, sizeof(debug_buf),
-		"[OV]dst_rect: x=%d, y=%d, w=%d, h=%d\n",
-		r->x, r->y, r->w, r->h);
-	bp += len;
-	len = snprintf(bp, sizeof(debug_buf),
-		"[OV]z_order=%d, is_fg=%d, alpha=0x%08x\n",
-		ov->z_order, ov->is_fg, ov->alpha);
-	bp += len;
-	len = snprintf(bp, sizeof(debug_buf),
-		"[OV]transp_mask=0x%08x, flags=0x%08x, id=%d\n",
-		ov->transp_mask, ov->flags, ov->id);
-	bp += len;
-	len = snprintf(bp, sizeof(debug_buf),
-		"[OV]user_data={%08x, %08x, %08x, %08x,\n"
-		"[OV]\t%08x, %08x, %08x, %08x}\n",
-		p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
-
-	return (bp - buff + len);
-}
-
-static int ov_requests_open(struct inode *inode, struct file *file)
-{
-        /* non-seekable */
-        file->f_mode &= ~(FMODE_LSEEK | FMODE_PREAD | FMODE_PWRITE);
-        return 0;
-}
-
-static int ov_requests_release(struct inode *inode, struct file *file)
-{
-	return 0;
-}
-
-static ssize_t ov_requests_read( struct file *file, char __user *buff,
-		size_t count, loff_t *ppos)
-{
-	int i, len = 0;
-
-	pr_info("%s\n", __func__);
-	if (*ppos)
-		return 0;       /* the end */
-
-	for (i = 0 ; i < MDP4_MAX_PIPE; i++) {
-		len += snprintf(debug_buf+len, sizeof(debug_buf),
-			"Pipe-%d\n", i);
-		len += ov_dump_req(&(ctrl->plist[i].req_data), debug_buf+len);
-	}
-
-	if (copy_to_user(buff, debug_buf, len))
-		return -EFAULT;
-
-	*ppos += len;   /* increase offset */
-
-	return len;
-}
-
-static const struct file_operations ov_requests_fops = {
-	.open		= ov_requests_open,
-	.release	= ov_requests_release,
-	.read		= ov_requests_read,
-};
-
-static int ov_snapshot_open(struct inode *inode, struct file *file)
-{
-        /* non-seekable */
-        file->f_mode &= ~(FMODE_LSEEK | FMODE_PREAD | FMODE_PWRITE);
-        return 0;
-}
-
-static int ov_snapshot_release(struct inode *inode, struct file *file)
-{
-        return 0;
-}
-
-static ssize_t ov_snapshot_write( struct file *file, const char __user *buff,
-        size_t count, loff_t *ppos)
-{
-        if (count >= sizeof(snapshot_filename))
-                return -EFAULT;
-        if (copy_from_user(snapshot_filename, buff, count))
-                return -EFAULT;
-        snapshot_filename[count] = 0;   /* end of string */
-	pr_info("%s: snapshot to: %s\n", __func__, snapshot_filename);
-
-	mutex_lock(&snapshot_lock);
-	is_demanding_snapshot = true;
-	mutex_unlock(&snapshot_lock);
-
-        return 0;
-}
-
-static const struct file_operations ov_snapshot_fops = {
-	.open		= ov_snapshot_open,
-	.release	= ov_snapshot_release,
-	.write		= ov_snapshot_write,
-};
-
-void mdp4_dump_ov(struct mdp_overlay *ov)
-{
-	ov_dump_req(ov, debug_buf);
-	pr_info("%s\n", debug_buf);
-}
-
-int mdp4_overlay_debugfs_init(void)
-{
-	struct dentry *dent = debugfs_create_dir("overlay", NULL);
-
-	if (IS_ERR(dent)) {
-		printk(KERN_ERR "%s(%d): debugfs_create_dir fail, error %ld\n",
-				__FILE__, __LINE__, PTR_ERR(dent));
-		return -1;
-	}
-
-	if (debugfs_create_file("requests", 0444, dent, 0, &ov_requests_fops)
-			== NULL) {
-		printk(KERN_ERR "%s(%d): debugfs_create_file: index fail\n",
-				__FILE__, __LINE__);
-		return -1;
-	}
-
-	if (debugfs_create_file("snapshot", 0222, dent, 0, &ov_snapshot_fops)
-			== NULL) {
-		printk(KERN_ERR "%s(%d): debugfs_create_file: index fail\n",
-				__FILE__, __LINE__);
-		return -1;
-	}
-
-
-	return 0;
-}
-#endif
