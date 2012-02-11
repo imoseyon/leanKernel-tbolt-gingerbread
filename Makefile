@@ -222,7 +222,7 @@ ifeq ($(ARCH),m68knommu)
        hdr-arch  := m68k
 endif
 
-KCONFIG_CONFIG	?= .config.aosp
+KCONFIG_CONFIG	?= .config
 
 # SHELL used by kbuild
 CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
