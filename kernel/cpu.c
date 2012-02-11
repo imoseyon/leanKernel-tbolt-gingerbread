@@ -15,7 +15,6 @@
 #include <linux/stop_machine.h>
 #include <linux/mutex.h>
 #include <linux/gfp.h>
-#include <linux/delay.h>
 
 #ifdef CONFIG_SMP
 /* Serializes the updates to cpu_online_mask, cpu_present_mask */
@@ -107,7 +106,6 @@ EXPORT_SYMBOL_GPL(put_online_cpus);
 static void cpu_hotplug_begin(void)
 {
 	cpu_hotplug.active_writer = current;
-	disable_hlt();
 
 	for (;;) {
 		mutex_lock(&cpu_hotplug.lock);
@@ -123,7 +121,6 @@ static void cpu_hotplug_done(void)
 {
 	cpu_hotplug.active_writer = NULL;
 	mutex_unlock(&cpu_hotplug.lock);
-	enable_hlt();
 }
 
 #else /* #if CONFIG_HOTPLUG_CPU */
@@ -230,9 +227,6 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
 		.mod = mod,
 		.hcpu = hcpu,
 	};
-	unsigned long timeout;
-	unsigned long flags;
-	struct task_struct *g, *p;
 
 	if (num_online_cpus() == 1)
 		return -EBUSY;
@@ -263,22 +257,9 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
 	}
 	BUG_ON(cpu_online(cpu));
 
-	timeout = jiffies + HZ;
 	/* Wait for it to sleep (leaving idle task). */
-	while (!idle_cpu(cpu)) {
-		msleep(1);
-		if (time_after(jiffies, timeout)) {
-			printk("%s: CPU%d not idle after offline. Running tasks:\n", __func__, cpu);
-			read_lock_irqsave(&tasklist_lock, flags);
-			do_each_thread(g, p) {
-				if (!p->se.on_rq || task_cpu(p) != cpu)
-					continue;
-				sched_show_task(p);
-			} while_each_thread(g, p);
-			read_unlock_irqrestore(&tasklist_lock, flags);
-			timeout = jiffies + HZ;
-		}
-	}
+	while (!idle_cpu(cpu))
+		yield();
 
 	/* This actually kills the CPU. */
 	__cpu_die(cpu);
@@ -611,3 +592,23 @@ void init_cpu_online(const struct cpumask *src)
 {
 	cpumask_copy(to_cpumask(cpu_online_bits), src);
 }
+
+static ATOMIC_NOTIFIER_HEAD(idle_notifier);
+
+void idle_notifier_register(struct notifier_block *n)
+{
+	atomic_notifier_chain_register(&idle_notifier, n);
+}
+EXPORT_SYMBOL_GPL(idle_notifier_register);
+
+void idle_notifier_unregister(struct notifier_block *n)
+{
+	atomic_notifier_chain_unregister(&idle_notifier, n);
+}
+EXPORT_SYMBOL_GPL(idle_notifier_unregister);
+
+void idle_notifier_call_chain(unsigned long val)
+{
+	atomic_notifier_call_chain(&idle_notifier, val, NULL);
+}
+EXPORT_SYMBOL_GPL(idle_notifier_call_chain);
