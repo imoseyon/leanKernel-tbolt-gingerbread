@@ -7,7 +7,6 @@
 wm97xx-ts-y := wm97xx-core.o
 
 obj-$(CONFIG_TOUCHSCREEN_88PM860X)	+= 88pm860x-ts.o
-obj-$(CONFIG_TOUCHSCREEN_AD7166) 	+= ad7166.o
 obj-$(CONFIG_TOUCHSCREEN_AD7877)	+= ad7877.o
 obj-$(CONFIG_TOUCHSCREEN_AD7879)	+= ad7879.o
 obj-$(CONFIG_TOUCHSCREEN_ADS7846)	+= ads7846.o
@@ -38,7 +37,7 @@ obj-$(CONFIG_TOUCHSCREEN_PENMOUNT)	+= penmount.o
 obj-$(CONFIG_TOUCHSCREEN_S3C2410)	+= s3c2410_ts.o
 obj-$(CONFIG_TOUCHSCREEN_SYNAPTICS_3K)       += synaptics_3k.o
 obj-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI)	+= synaptics_i2c_rmi.o
-obj-$(CONFIG_TOUCHSCREEN_ATMEL) += atmel.o atmel_224e.o
+obj-$(CONFIG_TOUCHSCREEN_ATMEL) += atmel.o
 obj-$(CONFIG_TOUCHSCREEN_NTRIG) += ntrig.o
 obj-$(CONFIG_TOUCHSCREEN_NTRIG_8x60) += ntrig_8x60.o
 obj-$(CONFIG_TOUCHSCREEN_ELAN_KTF2K)	+= elan_ktf2k.o

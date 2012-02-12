@@ -4,7 +4,6 @@
 #include <linux/bitops.h>
 
 #define ATMEL_QT602240_NAME "atmel_qt602240"
-#define ATMEL_MXT224E_NAME "atmel_mxt224e"
 
 #define INFO_BLK_FID                            0
 #define INFO_BLK_VID                            1
@@ -55,11 +54,6 @@
 #define TOUCH_KEYSET_T31                          31u
 #define TOUCH_XSLIDERSET_T32                      32u
 #define DIAGNOSTIC_T37                            37u
-#define PROCI_GRIPSUPPRESSION_T40                 40u /* 224E */
-#define PROCI_TOUCHSUPPRESSION_T42                42u /* 224E */
-#define SPT_CTECONFIG_T46                         46u /* 224E */
-#define PROCI_STYLUS_T47                          47u /* 224E */
-#define PROCG_NOISESUPPRESSION_T48                48u /* 224E */
 
 #define T37_PAGE_SIZE                           128
 
@@ -243,92 +237,12 @@
 
 #define T28_MSG_STATUS                          1
 
-/* T40, T42, T47, T48 and T46 are supported by 224E */
-#define T40_CFG_CTRL                            0
-#define T40_CFG_XLOGRIP                         1
-#define T40_CFG_XHIGRIP                         2
-#define T40_CFG_YLOGRIP                         3
-#define T40_CFG_YHIGRIP                         4
-
-#define T42_CFG_CTRL                            0
-#define T42_CFG_APPRTHR                         1
-#define T42_CFG_MAXAPPRAREA                     2
-#define T42_CFG_MAXTCHAREA                      3
-#define T42_CFG_SUPSTRENGTH                     4
-#define T42_CFG_SUPEXTTO                        5
-#define T42_CFG_MAXNUMTCHS                      6
-#define T42_CFG_SHAPESTRENGTH                   7
-
-#define T42_MSG_STATUS                          1
-
-#define T47_CFG_CTRL                            0
-#define T47_CFG_CONTMIN                         1
-#define T47_CFG_CONTMAX                         2
-#define T47_CFG_STABILITY                       3
-#define T47_CFG_MAXTCHAREA                      4
-#define T47_CFG_AMPLTHR                         5
-#define T47_CFG_STYSHAPE                        6
-#define T47_CFG_HOVERSUP                        7
-#define T47_CFG_CONFTHR                         8
-#define T47_CFG_SYNCSPERX                       9
-
-#define T48_CFG_CTRL                            0
-#define T48_CFG_CFG                             1
-#define T48_CFG_CALCFG                          2
-#define T48_CFG_BASEFREQ                        3
-#define T48_CFG_FREQ                            4 /* four bytes */
-#define T48_CFG_MFFREQ                          8 /* two bytes */
-#define T48_CFG_NLGAIN                          10
-#define T48_CFG_NLTHR                           11
-#define T48_CFG_GCLIMIT                         12
-#define T48_CFG_GCACTVINVLDADCS                 13
-#define T48_CFG_GCIDLEINVLDADCS                 14
-#define T48_CFG_GCINVALIDTHR                    15 /* two bytes */
-#define T48_CFG_GCMAXADCSPERX                   17
-#define T48_CFG_GCLIMITMIN                      18
-#define T48_CFG_GCLIMITMAX                      19
-#define T48_CFG_GCCOUNTMINTGT                   20 /* two bytes */
-#define T48_CFG_MFINVLDDIFFTHR                  22
-#define T48_CFG_MFINCADCSPXTHR                  23 /* two bytes */
-#define T48_CFG_MFERRORTHR                      25 /* two bytes */
-#define T48_CFG_SELFREQMAX                      27
-/* Reserved */
-#define T48_CFG_T9SETTINGS                      34
-
-#define T48_MSG_STATUS                          1
-#define T48_MSG_ADCSPERX                        2
-#define T48_MSG_FREQ                            3
-
-#define T46_CFG_CTRL                            0
-#define T46_CFG_MODE                            1
-#define T46_CFG_IDLESYNCSPERX                   2
-#define T46_CFG_ACTVSYNCSPERX                   3
-#define T46_CFG_ADCSPERSYNC                     4
-#define T46_CFG_PULSESPERADC                    5
-#define T46_CFG_XSLEW                           6
-#define T46_CFG_SYNCDELAY                       7 /* two bytes */
-
-#define T46_CFG_MODE0_X                         16
-#define T46_CFG_MODE0_Y                         14
-
-#define T46_MSG_STATUS                          1
-
 /* cable_config[] of atmel_i2c_platform_data */
 /* config[] of atmel_config_data */
 #define CB_TCHTHR                               0
 #define CB_NOISETHR                             1
 #define CB_IDLEGCAFDEPTH                        2
 #define CB_ACTVGCAFDEPTH                        3
-#define CB_IDLESYNCSPERX                        2 /* 224E */
-#define CB_ACTVSYNCSPERX                        3 /* 224E */
-
-#define WLC_IDLEACQINT                          0
-#define WLC_ACTVACQINT                          1
-#define WLC_ACTV2IDLETO                         2
-#define WLC_TCHTHR                              3
-#define WLC_NOISETHR                            4
-#define WLC_IDLEGCAFDEPTH                       5
-#define WLC_ACTVGCAFDEPTH                       6
 
 #define NC_TCHTHR                               0
 #define NC_TCHDI                                1
@@ -388,7 +302,7 @@ struct atmel_i2c_platform_data {
 	int8_t config_T6[6];
 	int8_t config_T7[3];
 	int8_t config_T8[10];
-	int8_t config_T9[35];
+	int8_t config_T9[32];
 	int8_t config_T15[11];
 	int8_t config_T18[2];
 	int8_t config_T19[16];
@@ -399,16 +313,11 @@ struct atmel_i2c_platform_data {
 	int8_t config_T25[14];
 	int8_t config_T27[7];
 	int8_t config_T28[6];
-	int8_t config_T40[5];
-	int8_t config_T42[8];
-	int8_t config_T46[9];
-	int8_t config_T47[10];
-	int8_t config_T48[54];
 	uint8_t object_crc[3];
 	int8_t cable_config[4];
 	int8_t cable_config_T7[3];
 	int8_t cable_config_T8[10];
-	int8_t cable_config_T9[35];
+	int8_t cable_config_T9[32];
 	int8_t cable_config_T22[17];
 	int8_t cable_config_T28[6];
 	int8_t wlc_config[7];
@@ -426,10 +335,6 @@ struct atmel_config_data {
 	int8_t *config_T9;
 	int8_t *config_T22;
 	int8_t *config_T28;
-	int8_t *config_T40;
-	int8_t *config_T42;
-	int8_t *config_T46;
-	int8_t *config_T48;
 };
 
 #endif
