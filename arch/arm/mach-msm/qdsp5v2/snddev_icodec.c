@@ -298,7 +298,7 @@ static int snddev_icodec_open_rx(struct snddev_icodec_state *icodec)
 		adie_codec_setpath(icodec->adie_path, icodec->sample_rate, 256);
 	} else {
 		if (aic3254_ops->aic3254_set_mode) {
-			if (msm_get_call_state() == 1)
+			if (msm_get_voice_state() == 1)
 				aic3254_ops->aic3254_set_mode(AIC3254_CONFIG_RX,
 					icodec->data->aic3254_voc_id);
 			else
@@ -392,7 +392,7 @@ static int snddev_icodec_open_tx(struct snddev_icodec_state *icodec)
 	/* Enable External Codec A3254 */
 	if (support_aic3254) {
 		if (aic3254_ops->aic3254_set_mode) {
-			if (msm_get_call_state() == 1)
+			if (msm_get_voice_state() == 1)
 				aic3254_ops->aic3254_set_mode(AIC3254_CONFIG_TX,
 					icodec->data->aic3254_voc_id);
 			else
