@@ -45,6 +45,10 @@
 
 #define REAL_STEREO_CHANNEL_MODE	9
 
+#define VOICE_STATE_INVALID 0x0
+#define VOICE_STATE_INCALL 0x1
+#define VOICE_STATE_OFFCALL 0x2
+
 struct msm_snddev_info {
 	const char *name;
 	u32 capability;
@@ -116,6 +120,7 @@ struct auddev_evt_audcal_info {
 union msm_vol_mute {
 	int vol;
 	bool mute;
+	s32 voice_state;
 };
 
 struct auddev_evt_voc_mute_info {
