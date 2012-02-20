@@ -57,11 +57,7 @@ int msm_adsp_write(struct msm_adsp_module *module,
 		   unsigned queue_id,
 		   void *data, size_t len);
 
-#ifndef CONFIG_UNLOCK_184MHZ
 #define ADSP_MESSAGE_ID -1
-#else
-#define ADSP_MESSAGE_ID 0xffff
-#endif
 
 #if 1
 /* Command Queue Indexes */

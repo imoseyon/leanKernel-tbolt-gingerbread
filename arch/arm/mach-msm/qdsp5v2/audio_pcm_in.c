@@ -579,23 +579,15 @@ static long audpcm_in_ioctl(struct file *file,
 		break;
 	}
 	case AUDIO_STOP: {
-#ifdef CONFIG_UNLOCK_184MHZ
-		MM_DBG("AUDIO_STOP\n");
-#endif
 		rc = audpcm_in_disable(audio);
 		rc = msm_snddev_withdraw_freq(audio->enc_id,
 					SNDDEV_CAP_TX, AUDDEV_CLNT_ENC);
-#ifndef CONFIG_UNLOCK_184MHZ
 		MM_DBG("msm_snddev_withdraw_freq\n");
-#endif
 		audio->stopped = 1;
 		audio->abort = 0;
 		break;
 	}
 	case AUDIO_FLUSH: {
-#ifdef CONFIG_UNLOCK_184MHZ
-		MM_DBG("AUDIO_FLUSH\n");
-#endif
 		if (audio->stopped) {
 			/* Make sure we're stopped and we wake any threads
 			 * that might be blocked holding the read_lock.
@@ -831,9 +823,6 @@ static int audpcm_in_open(struct inode *inode, struct file *file)
 		rc = -EBUSY;
 		goto done;
 	}
-#ifdef CONFIG_UNLOCK_184MHZ
-	audio->mode = MSM_AUD_ENC_MODE_TUNNEL;
-#endif
 	/* Settings will be re-config at AUDIO_SET_CONFIG,
 	 * but at least we need to have initial config
 	 */
@@ -852,9 +841,6 @@ static int audpcm_in_open(struct inode *inode, struct file *file)
 	}
 	audio->enc_id = encid;
 
-#ifdef CONFIG_UNLOCK_184MHZ
-	MM_DBG("allocated encoder %d, module %s\n", encid, audio->module_name);
-#endif
 	rc = msm_adsp_get(audio->module_name, &audio->audrec,
 			   &audrec_adsp_ops, audio);
 
